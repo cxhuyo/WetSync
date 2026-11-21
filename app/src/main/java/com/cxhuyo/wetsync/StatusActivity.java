@@ -68,6 +68,11 @@ public class StatusActivity extends Activity implements FrameworkStatus.Listener
     private boolean autoScopeRequested;
     private volatile boolean hostRunningCache;
 
+    /** 「关于」红点：记录已看过的安装时间，装 / 更新 / 重装都会变 */
+    private static final String UI_PREFS = "ui_state";
+    private static final String KEY_ABOUT_SEEN_UPDATE_TIME = "about_seen_update_time";
+    private View aboutDot;
+
     // ================= 生命周期 =================
 
     @Override
@@ -78,6 +83,7 @@ public class StatusActivity extends Activity implements FrameworkStatus.Listener
         setContentView(buildUi());
         registerProbeReceiver();
         FrameworkStatus.addListener(this);
+        maybeForceOpenAbout();
     }
 
     @Override
@@ -85,6 +91,7 @@ public class StatusActivity extends Activity implements FrameworkStatus.Listener
         super.onResume();
         // 与 LuckyTool 一样：不做手动刷新，进页面后自己盯着。
         tick();
+        updateAboutDot();
     }
 
     @Override
@@ -204,6 +211,11 @@ public class StatusActivity extends Activity implements FrameworkStatus.Listener
         card3.addView(linkRow("申请作用域", "向 LSPosed 发送请求，在通知里点允许即可",
                 v -> requestScope(false)));
         root.addView(card3);
+
+        // ---- 卡片四：关于 ----
+        LinearLayout card4 = newCard();
+        card4.addView(buildAboutRow());
+        root.addView(card4);
 
         // ---- 说明 ----
         vHint = new TextView(this);
@@ -357,6 +369,85 @@ public class StatusActivity extends Activity implements FrameworkStatus.Listener
 
     void toast(String s) {
         try { Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); } catch (Throwable ignore) {}
+    }
+
+    // ================= 关于 =================
+
+    private View buildAboutRow() {
+        LinearLayout trailing = new LinearLayout(this);
+        trailing.setOrientation(LinearLayout.HORIZONTAL);
+        trailing.setGravity(Gravity.CENTER_VERTICAL);
+
+        aboutDot = new View(this);
+        GradientDrawable dot = new GradientDrawable();
+        dot.setShape(GradientDrawable.OVAL);
+        dot.setColor(0xFFF03A3A);
+        aboutDot.setBackground(dot);
+        aboutDot.setContentDescription("有更新提示");
+        LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dp(9), dp(9));
+        dotLp.rightMargin = dp(8);
+        trailing.addView(aboutDot, dotLp);
+
+        TextView arrow = new TextView(this);
+        arrow.setText("›");
+        arrow.setTextSize(20);
+        arrow.setTextColor(cSub);
+        trailing.addView(arrow);
+
+        View row = newRow("关于", "版本信息与赞赏支持", trailing);
+        row.setBackground(ripple());
+        row.setOnClickListener(v -> openAbout());
+        updateAboutDot();
+        return row;
+    }
+
+    /** 首次安装、覆盖更新、重装（lastUpdateTime 变化）都会自动打开关于页 */
+    private void maybeForceOpenAbout() {
+        if (!aboutShouldPrompt()) return;
+        ui.postDelayed(this::openAbout, 350);
+    }
+
+    private void openAbout() {
+        markAboutSeen();
+        try {
+            startActivity(new Intent(this, AboutActivity.class));
+        } catch (Throwable t) {
+            MainHookLogger.log("event=about_open_fail " + t);
+        }
+    }
+
+    private boolean aboutShouldPrompt() {
+        return lastUpdateTime() != aboutSeenTime();
+    }
+
+    private void updateAboutDot() {
+        if (aboutDot == null) return;
+        aboutDot.setVisibility(aboutShouldPrompt() ? View.VISIBLE : View.GONE);
+    }
+
+    private void markAboutSeen() {
+        try {
+            getSharedPreferences(UI_PREFS, MODE_PRIVATE).edit()
+                    .putLong(KEY_ABOUT_SEEN_UPDATE_TIME, lastUpdateTime()).apply();
+        } catch (Throwable ignore) {}
+        updateAboutDot();
+    }
+
+    private long aboutSeenTime() {
+        try {
+            return getSharedPreferences(UI_PREFS, MODE_PRIVATE)
+                    .getLong(KEY_ABOUT_SEEN_UPDATE_TIME, 0L);
+        } catch (Throwable t) {
+            return 0L;
+        }
+    }
+
+    private long lastUpdateTime() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).lastUpdateTime;
+        } catch (Throwable t) {
+            return 0L;
+        }
     }
 
     // ================= 版本 =================
