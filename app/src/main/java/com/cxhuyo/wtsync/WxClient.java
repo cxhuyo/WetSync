@@ -28,7 +28,7 @@ public final class WxClient {
     String uin = "";
     /**
      * 设备名：与微信输入法一致，取系统设置里用户命名的设备名（Settings.Global device_name，
-     * 如 "OnePlus 13"），取不到再用 Build.MODEL。该名字会随握手 sf(9) 上报，
+     * 例如用户自定义的机型名），取不到再用 Build.MODEL。该名字会随握手 sf(9) 上报，
      * 服务端以此作为本机在关联设备列表里的显示名。
      */
     String deviceName = computeDeviceName();

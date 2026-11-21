@@ -89,7 +89,8 @@ PC 微信输入法  ⇄  wetype.weixin.qq.com  ⇄  小布输入法进程 (com.o
 ## 安装
 
 1. 设备已 Root 并装好 **LSPosed 2.1.x**（Zygisk 或 KernelSU 均可）。
-2. 安装 `app-release.apk`。
+2. 安装 APK：从 [Releases](https://github.com/cxhuyo/WtSync/releases) 下载 `WtSync-v3.18.8.apk`；
+   自行构建则用 `app/build/outputs/apk/release/app-release.apk`（两者内容一致）。
 3. 打开 LSPosed 管理器 → 模块 → 启用 **WtSync** → **作用域只勾 `com.oplus.keyboard`**。
 4. 强行停止小布输入法（或在 LSPosed 里点「重启应用」），下次弹出键盘时模块生效。
 5. 桌面会出现「微信同步·小布版」图标，作为备用配置入口。
