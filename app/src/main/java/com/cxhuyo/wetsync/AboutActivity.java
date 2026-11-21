@@ -1,11 +1,13 @@
 package com.cxhuyo.wetsync;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Insets;
 import android.graphics.Outline;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
@@ -19,6 +21,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * 独立的「关于」页面。
@@ -30,6 +33,10 @@ import android.widget.TextView;
  * 按本模块的 COUI 配色重绘，深色浅色都跟着系统走。
  */
 public final class AboutActivity extends Activity {
+
+    /** 开源声明地址 */
+    private static final String SOURCE_URL = "https://github.com/cxhuyo/WetSync";
+    private static final String SOURCE_LABEL = "github.com/cxhuyo/WetSync";
 
     private int cBg, cCard, cText, cSub, cDivider, cAccent;
 
@@ -77,6 +84,7 @@ public final class AboutActivity extends Activity {
         scroll.addView(content);
 
         content.addView(buildIntroCard());
+        content.addView(buildOriginCard());
         content.addView(buildDonateCard());
 
         TextView footer = text(versionLabel() + " · 感谢使用", 12, cSub);
@@ -129,6 +137,60 @@ public final class AboutActivity extends Activity {
         note.setPadding(dp(16), 0, dp(16), dp(16));
         card.addView(note);
         return card;
+    }
+
+    private View buildOriginCard() {
+        LinearLayout card = createCard("开源声明", null);
+        TextView note = text("本模块开源，源码、版本与更新说明都在下面这个仓库。",
+                13, cSub);
+        note.setPadding(dp(16), 0, dp(16), dp(6));
+        card.addView(note);
+        card.addView(linkRow("WetSync", SOURCE_LABEL, () -> openUrl(SOURCE_URL)));
+        return card;
+    }
+
+    private View linkRow(String title, String subtitle, Runnable action) {
+        LinearLayout row = horizontal();
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(16), dp(13), dp(14), dp(13));
+        int ripple = selectableItemBackground();
+        if (ripple != 0) row.setBackgroundResource(ripple);
+
+        LinearLayout texts = vertical();
+        TextView name = text(title, 15, cAccent);
+        name.setTypeface(Typeface.DEFAULT_BOLD);
+        texts.addView(name);
+        if (subtitle != null && !subtitle.isEmpty()) {
+            TextView sub = text(subtitle, 12, cSub);
+            LinearLayout.LayoutParams subParams = wrap();
+            subParams.topMargin = dp(2);
+            texts.addView(sub, subParams);
+        }
+        row.addView(texts, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(text("\u203a", 20, cSub));
+
+        row.setClickable(true);
+        row.setFocusable(false);
+        row.setOnClickListener(v -> action.run());
+        return row;
+    }
+
+    private int selectableItemBackground() {
+        TypedValue value = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.selectableItemBackground, value, true)
+                && value.resourceId != 0) {
+            return value.resourceId;
+        }
+        return 0;
+    }
+
+    private void openUrl(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (Throwable t) {
+            Toast.makeText(this, "没有可以打开该链接的应用", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private View buildDonateCard() {
