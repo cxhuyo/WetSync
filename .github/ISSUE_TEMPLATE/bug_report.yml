@@ -1,0 +1,75 @@
+name: Bug 报告
+description: 同步异常、模块不生效、崩溃
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请先过一遍 [排障手册](https://github.com/cxhuyo/WtSync/blob/main/docs/TROUBLESHOOTING.md)。
+        **请自行脱敏**：uin、token、设备组 id、内网地址都不要贴。
+  - type: input
+    id: device
+    attributes:
+      label: 机型与系统
+      placeholder: 一加 13 / ColorOS 16 / Android 16
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: 小布输入法版本
+      placeholder: 1.8.35.17-mkt（设置 → 关于）
+    validations:
+      required: true
+  - type: input
+    id: module
+    attributes:
+      label: WtSync 版本 / LSPosed 版本
+      placeholder: 3.18.8 (51) / LSPosed 2.1.x
+    validations:
+      required: true
+  - type: dropdown
+    id: scene
+    attributes:
+      label: 出问题的链路
+      options:
+        - PC → 手机 文本
+        - PC → 手机 图片
+        - 手机 → PC 文本
+        - 手机 → PC 图片
+        - 常用语同步
+        - 个人词库同步
+        - 模块未生效 / 菜单没出现
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 精确到"复制了什么、第几秒做了什么"，比如：PC 复制 → 手机息屏 → 亮屏弹键盘
+      placeholder: |
+        1. PC 复制一段文本
+        2. 手机立即息屏，等 30 秒
+        3. 亮屏并弹出小布输入法
+        4. 面板里没有这条内容
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: module.log 相关片段
+      description: 用 ``` 包起来。可只贴 `clip_` / `clipdb_` / `clipimg_` / `error` 附近的行
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 已阅读排障手册并确认不是已知限制
+          required: true
+        - label: 已移除 uin / token / 设备组 id 等敏感信息
+          required: true

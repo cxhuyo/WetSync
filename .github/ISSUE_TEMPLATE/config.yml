@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 排障手册
+    url: https://github.com/cxhuyo/WtSync/blob/main/docs/TROUBLESHOOTING.md
+    about: 息屏不同步、面板缺行、内容重复循环 —— 先看这里
+  - name: 构建说明
+    url: https://github.com/cxhuyo/WtSync/blob/main/docs/BUILD.md
+    about: compileSdk 37、签名、真机部署

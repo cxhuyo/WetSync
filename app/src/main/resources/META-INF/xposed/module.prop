@@ -1,0 +1,7 @@
+name=WtSync
+version=3.18.8
+versionCode=51
+author=cxhuyo
+description=把 PC 端微信输入法的剪贴板、常用语与个人词库同步到小布输入法
+minApiVersion=101
+targetApiVersion=102

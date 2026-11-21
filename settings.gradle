@@ -1,0 +1,25 @@
+pluginManagement {
+    repositories {
+        // 官方源优先；下面三个阿里云镜像放在后面做兜底（国内网络下更稳）。
+        // 如果你的网络访问官方源很慢，可以把镜像三行提到最前面。
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+}
+
+rootProject.name = 'WtSync'
+include ':app'
