@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;

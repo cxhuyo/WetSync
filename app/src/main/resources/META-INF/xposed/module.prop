@@ -1,7 +1,7 @@
-name=WtSync
-version=3.18.8
-versionCode=51
+name=WetSync
+version=3.20.1
+versionCode=54
 author=cxhuyo
-description=把 PC 端微信输入法的剪贴板、常用语与个人词库同步到小布输入法
+description=把小布输入法接入微信输入法的跨设备同步：剪贴板、常用语、个人词库
 minApiVersion=101
 targetApiVersion=102

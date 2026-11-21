@@ -22,7 +22,7 @@ grep -E "event=(package_ready|loop_start|identity_ok|clip_|clipdb_|clipimg_)" m.
 | LSPosed 是否启用 | 管理器里模块状态为「已启用」 |
 | 作用域是否正确 | **只勾 `com.oplus.keyboard`**，勾了微信反而不会生效 |
 | 宿主是否重启 | `am force-stop com.oplus.keyboard` 后重新弹键盘 |
-| 版本是否匹配 | `dumpsys package com.cxhuyo.wtsync \| grep versionName` |
+| 版本是否匹配 | `dumpsys package com.cxhuyo.wetsync \| grep versionName` |
 
 日志里没有 `event=module_loaded` ⇒ 注入没发生；有 `module_loaded` 但没有 `package_ready`
 ⇒ 作用域不对或包名不匹配。
@@ -135,7 +135,7 @@ grep -E "wxdict_delta|userdict_sync|xbd_merge|ud_" m.log | tail -20
 ```bash
 adb shell su -c 'am force-stop com.oplus.keyboard'
 adb shell su -c 'rm -rf /data/data/com.oplus.keyboard/files/wtsync'
-# 重新打开设置页，重填 UIN / Group / Token
+# 弹出一次键盘，模块会自动匿名注册新身份；再到「跨设备同步」里重新关联设备
 ```
 
 `wtsync` 目录只存模块状态，删掉不影响宿主本身的输入法设置与词库。

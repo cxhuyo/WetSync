@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 
 import io.github.libxposed.api.XposedModule;
@@ -9,7 +9,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /**
- * WetypeXiaobuSync —— 方案 B 独立客户端 + 小布注入（scope: com.oplus.keyboard）。
+ * WetSync —— 独立的微信输入法同步客户端 + 小布输入法注入（scope: com.oplus.keyboard）。
  */
 public class MainHook extends XposedModule {
 
@@ -206,7 +206,16 @@ public class MainHook extends XposedModule {
         }, "WtCtx").start();
     }
 
-    /** 一站式配置: 接收设置页广播 → 落盘凭证 → 重启客户端 / 提交匹配码 */
+    /**
+     * 宿主进程内的广播入口：
+     *   PROBE —— 模块主页（com.cxhuyo.wetsync）询问激活状态/运行时 API/框架/引擎，
+     *            回包带 extras，是「模块页显示真实激活状态」的唯一数据源；
+     *   BIND / STATUS / SETID —— adb 调试与自动化用的三条：
+     *   adb shell am broadcast -a com.cxhuyo.wetsync.STATUS -p com.oplus.keyboard
+     *   adb shell am broadcast -a com.cxhuyo.wetsync.BIND   -p com.oplus.keyboard --es code <6位码>
+     *   adb shell am broadcast -a com.cxhuyo.wetsync.SETID  -p com.oplus.keyboard --es uin .. --es name ..
+     * 身份统一走 files/wtsync/identity.txt，早期三个文本文件的 CONFIG 入口已删除。
+     */
     private void registerConfigReceiver() {
         final android.content.Context ctx = XiaobuInject.ctx;
         if (ctx == null) { MainHookLogger.log("event=cfg_recv_noctx"); return; }
@@ -217,19 +226,13 @@ public class MainHook extends XposedModule {
                 try {
                     java.io.File dir = new java.io.File(ctx.getFilesDir(), "wtsync");
                     dir.mkdirs();
-                    if ("com.cxhuyo.wtsync.CONFIG".equals(a)) {
-                        write(new java.io.File(dir, "uin.txt"), i.getStringExtra("uin"));
-                        write(new java.io.File(dir, "group.txt"), i.getStringExtra("group"));
-                        write(new java.io.File(dir, "token.txt"), i.getStringExtra("token"));
-                        WtClient.restart();
-                        reply(ctx, "配置已生效, 客户端已重启");
-                    } else if ("com.cxhuyo.wtsync.BIND".equals(a)) {
+                    if ("com.cxhuyo.wetsync.BIND".equals(a)) {
                         if (WtClient.active != null) WtClient.active.bindCode(i.getStringExtra("code"));
                         reply(ctx, "匹配码已提交");
-                    } else if ("com.cxhuyo.wtsync.STATUS".equals(a)) {
+                    } else if ("com.cxhuyo.wetsync.STATUS".equals(a)) {
                         long u = WtClient.active != null ? 1 : 0;
                         reply(ctx, "宿主进程存活, 客户端=" + (u == 1 ? "运行中" : "未启动(缺凭证)"));
-                    } else if ("com.cxhuyo.wtsync.SETID".equals(a)) {
+                    } else if ("com.cxhuyo.wetsync.SETID".equals(a)) {
                         // 一站式写入身份凭证（uin/name/code/priv），立即重启引擎
                         java.io.File sd = new java.io.File(ctx.getFilesDir(), "wtsync");
                         sd.mkdirs();
@@ -239,15 +242,18 @@ public class MainHook extends XposedModule {
                         MainHookLogger.log("event=setid_written len=" + id.length());
                         WtClient.restart();
                         reply(ctx, "身份已写入, 客户端已重启");
+                    } else if ("com.cxhuyo.wetsync.PROBE".equals(a)) {
+                        // 模块主页探活：这条能回，就证明模块确实注入进了输入法进程
+                        probeBack(ctx);
                     }
                 } catch (Throwable t) { MainHookLogger.log("event=cfg_err " + t); }
             }
         };
         android.content.IntentFilter f = new android.content.IntentFilter();
-        f.addAction("com.cxhuyo.wtsync.CONFIG");
-        f.addAction("com.cxhuyo.wtsync.BIND");
-        f.addAction("com.cxhuyo.wtsync.STATUS");
-        f.addAction("com.cxhuyo.wtsync.SETID");
+        f.addAction("com.cxhuyo.wetsync.BIND");
+        f.addAction("com.cxhuyo.wetsync.STATUS");
+        f.addAction("com.cxhuyo.wetsync.SETID");
+        f.addAction("com.cxhuyo.wetsync.PROBE");
         if (android.os.Build.VERSION.SDK_INT >= 33)
             ctx.registerReceiver(r, f, 2); // RECEIVER_EXPORTED
         else
@@ -263,10 +269,44 @@ public class MainHook extends XposedModule {
 
     private static String nz(String s) { return s == null ? "" : s; }
 
+    /**
+     * 回包给模块主页。extras 都是字符串，缺哪项就留空，页面自己降级显示。
+     * 这是模块自身进程唯一能拿到的「真实运行时信息」（模块进程里拿不到 libxposed 对象）。
+     */
+    private void probeBack(android.content.Context ctx) {
+        try {
+            android.content.Intent i = new android.content.Intent("com.cxhuyo.wetsync.PROBE_BACK");
+            i.setPackage("com.cxhuyo.wetsync");
+            try { i.putExtra("api", String.valueOf(getApiVersion())); } catch (Throwable ignore) {}
+            try {
+                String n = getFrameworkName();
+                String v = getFrameworkVersion();
+                long c = getFrameworkVersionCode();
+                StringBuilder sb = new StringBuilder(n == null || n.isEmpty() ? "LSPosed" : n);
+                if (v != null && !v.isEmpty()) sb.append(' ').append(v);
+                if (c > 0) sb.append("（").append(c).append("）");
+                i.putExtra("fw", sb.toString());
+            } catch (Throwable ignore) {}
+            try {
+                i.putExtra("engine", WtClient.active != null ? "运行中" : "未启动（缺身份凭证）");
+            } catch (Throwable ignore) {}
+            try {
+                android.content.pm.PackageInfo pi = ctx.getPackageManager()
+                        .getPackageInfo(ctx.getPackageName(), 0);
+                i.putExtra("host", pi.versionName + "（" + pi.versionCode + "）");
+            } catch (Throwable ignore) {}
+            i.putExtra("module", BuildConfig.VERSION_NAME + "（" + BuildConfig.VERSION_CODE + "）");
+            ctx.sendBroadcast(i);
+            MainHookLogger.log("event=probe_back");
+        } catch (Throwable t) {
+            MainHookLogger.log("event=probe_back_fail " + t);
+        }
+    }
+
     private static void reply(android.content.Context ctx, String msg) {
         try {
-            android.content.Intent i = new android.content.Intent("com.cxhuyo.wtsync.STATUS_BACK");
-            i.setPackage("com.cxhuyo.wtsync");
+            android.content.Intent i = new android.content.Intent("com.cxhuyo.wetsync.STATUS_BACK");
+            i.setPackage("com.cxhuyo.wetsync");
             i.putExtra("msg", msg);
             ctx.sendBroadcast(i);
         } catch (Throwable ignore) {}

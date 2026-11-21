@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

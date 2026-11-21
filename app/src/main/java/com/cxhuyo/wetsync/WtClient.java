@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 import java.io.File;
 import java.io.FileInputStream;

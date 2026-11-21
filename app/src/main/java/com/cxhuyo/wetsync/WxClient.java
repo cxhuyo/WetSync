@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- COUI / ColorOS 16 深色配色：纯黑底 + 近黑卡片 -->
+    <color name="bg">#FF000000</color>
+    <color name="card">#FF1C1C1E</color>
+    <color name="text">#FFF2F2F2</color>
+    <color name="sub">#FF8E8E93</color>
+    <color name="accent">#FF4C8DFF</color>
+    <color name="ok">#FF32D583</color>
+    <color name="err">#FFFF6B6B</color>
+    <color name="divider">#1FFFFFFF</color>
+</resources>

@@ -6,16 +6,17 @@
 
 | 决策 | 原因 |
 |---|---|
-| 作用域只挂 `com.oplus.keyboard` | 宿主是唯一需要注入的进程；不进微信进程、不读微信文件 |
-| 协议自己实现，不复用微信客户端 | 微信没有对外 SDK，`compileOnly` 依赖 libxposed，运行期零第三方库 |
+| 作用域只挂 `com.oplus.keyboard` | 宿主是唯一需要注入的进程，模块只在这一个应用内运行 |
+| 协议自己实现 | 微信没有对外 SDK，`compileOnly` 依赖 libxposed，运行期零第三方库 |
 | UI 复用宿主组件 | 设置页与同步页必须与宿主风格一致，且要跟随深浅色主题 |
 | 数据不落独立数据库 | 剪贴板历史用宿主自己的 `tab_clipboard_data`，词库走宿主 API |
 
 模块 APK 里有两条执行路径：
 
 - **注入部分**（`MainHook` 起）只在宿主进程内运行，常驻；所有网络与剪贴板逻辑都在这条线上。
-- **配置部分**（`SettingsActivity`）是普通 Activity，通过**显式广播**（`setPackage("com.oplus.keyboard")`）
-  把配置下发给注入侧，自己不做任何网络请求。
+- **模块主页**（`StatusActivity`）是模块自己的 Activity，跑在模块进程里：查询/申请作用域、
+  显示激活状态与版本信息，不发起任何同步请求。拿不到管理器服务时，用**显式广播**
+  （`setPackage("com.oplus.keyboard")`）向宿主探活。
 
 ## 2. Hook 点
 

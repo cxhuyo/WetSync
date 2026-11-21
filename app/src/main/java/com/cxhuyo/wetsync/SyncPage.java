@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 import android.app.Activity;
 import android.content.Context;
@@ -40,8 +40,8 @@ public final class SyncPage {
     private static final float CARD_RADIUS_DP = 22f;
     private static final float MARGIN_DP = 16f;
 
-    /** 从宿主当前界面采样：页面底色 / 卡片底色 */
-    private static final class Theme {
+    /** 主题采样结果：其它二级页（模块状态）复用同一套配色 */
+    static final class Theme {
         int pageBg = 0xFF000000;
         int cardBg = 0xFF1A1A1A;
         int titleC = TITLE_C;
@@ -49,7 +49,7 @@ public final class SyncPage {
         boolean light;
     }
 
-    private static Theme sampleTheme(Activity act) {
+    static Theme sampleTheme(Activity act) {
         Theme t = new Theme();
         try {
             View root = act.getWindow().getDecorView();
@@ -130,6 +130,17 @@ public final class SyncPage {
     /** 当前页面业务内容根（改名/解绑后就地重建） */
     private static volatile View pageBody;
     private static volatile View navPrev;
+
+    /**
+     * 页面栈：同一 Activity 里可以叠着开二级页（同步页 → 模块状态）。
+     * 每压入一页就记下「被压住的那一页 + 它自己的上一页」，关闭时原样回退，
+     * 否则 navPage/navPrev 被新页覆盖后，旧页会失去引用、返回键再也关不掉。
+     */
+    private static final class Frame {
+        View page;
+        View prev;
+    }
+    private static final java.util.ArrayDeque<Frame> STACK = new java.util.ArrayDeque<>();
     /** 进入页面自动同步的冷却时间戳（防止 refreshContent 触发的重建反复拉起同步） */
     private static volatile long LAST_AUTO_SYNC = 0;
 
@@ -142,9 +153,11 @@ public final class SyncPage {
         if (navPage != null) {
             final View page = navPage;
             final View prev = navPrev;
-            navPage = null;
-            navPrev = null;
-            OPEN = false;
+            // 逐层回退：栈里还有上一页就恢复它，否则整组页面关闭
+            Frame back = STACK.isEmpty() ? null : STACK.pop();
+            navPage = back == null ? null : back.page;
+            navPrev = back == null ? null : back.prev;
+            OPEN = navPage != null;
             try {
                 Activity act = (Activity) page.getContext();
                 int outR = idOf(act, "slide_out_right", "anim");
@@ -228,6 +241,7 @@ public final class SyncPage {
             navPage = null;
             navPrev = null;
             pageBody = null;
+            STACK.clear();
         }
         MainHookLogger.log("event=page_enter act=" + act.getClass().getName());
         // 首选：挂进宿主原生导航容器 nav_host_fragment_container，
@@ -336,7 +350,20 @@ public final class SyncPage {
         } catch (Throwable t) {
             useLp = new ViewGroup.LayoutParams(MATCH, MATCH);
         }
-        parent.addView(root, idx + 1, useLp);
+        // 允许在已有二级页上再叠一页（同步页 → 模块状态）：先记下当前可见页，
+        // 新页进场时把它左移并隐藏，关闭时再从栈里取回来恢复显示。
+        final View oldTop = (navPage != null && navPage.isAttachedToWindow()) ? navPage : navHost;
+        Frame frame = new Frame();
+        frame.page = navPage;
+        frame.prev = navPrev;
+        STACK.push(frame);
+        // 叠页时的插入位置：必须排在「当前可见页」之后，否则新页会被旧页盖住
+        int insertAt = idx + 1;
+        if (oldTop != navHost) {
+            int oldIdx = parent.indexOfChild(oldTop);
+            if (oldIdx >= 0) insertAt = oldIdx + 1;
+        }
+        parent.addView(root, insertAt, useLp);
 
         int inR = idOf(act, "slide_in_right", "anim");
         int outL = idOf(act, "slide_out_left", "anim");
@@ -344,7 +371,7 @@ public final class SyncPage {
             Animation in = AnimationUtils.loadAnimation(act, inR);
             root.startAnimation(in);
             Animation out = AnimationUtils.loadAnimation(act, outL);
-            final View oldPage = navHost;
+            final View oldPage = oldTop;
             out.setAnimationListener(new Animation.AnimationListener() {
                 @Override public void onAnimationStart(Animation a) {}
                 @Override public void onAnimationRepeat(Animation a) {}
@@ -358,7 +385,7 @@ public final class SyncPage {
         }
 
         navPage = root;
-        navPrev = navHost;
+        navPrev = oldTop;
         OPEN = true;
         MainHookLogger.log("event=navc_mount_ok parent=" + parent.getClass().getName()
                 + " scroller=" + scroller.getClass().getName());
@@ -599,7 +626,7 @@ public final class SyncPage {
         finishCard(card2, d, th.cardBg);
         body.addView(card2, lp(d, 14));
 
-        // ================= 卡片三：关联 =================
+        // ================= 卡片三：关联设备 =================
         LinearLayout card3 = card(act, th.cardBg, d);
         View rBind = row(act, inf, L_JUMP, "关联设备", "输入其他设备显示的关联码，或在本机生成", ARROW);
         rBind.setOnClickListener(v -> showJoinDialog(act));
@@ -869,7 +896,7 @@ public final class SyncPage {
     }
 
     /** 把控件塞进行布局右侧的 widget_frame（原生行为：Preference widget 槽） */
-    private static void attachTrailing(View rowView, View trailing) {
+    static void attachTrailing(View rowView, View trailing) {
         try {
             View frame = rowView.findViewById(android.R.id.widget_frame);
             if (frame instanceof ViewGroup) {
@@ -1192,8 +1219,8 @@ public final class SyncPage {
     /** 自绘控件（图标 / 箭头 / 分组标题 / 对话框）用的主题色 */
     private static int thTitle = 0xFFE9E9E9, thSum = 0xFF9E9E9E;
 
-    private static View row(Context host, LayoutInflater inf, int layout,
-                            String title, String summary, int arrowId) {
+    static View row(Context host, LayoutInflater inf, int layout,
+                    String title, String summary, int arrowId) {
         View v;
         try {
             v = inf.inflate(layout, null);
@@ -1425,7 +1452,7 @@ public final class SyncPage {
      * 底色 couiColorCardBackground + 圆角路径 + 左右内缩 16dp，组内首/中/尾行由
      * setPositionInGroup 决定上下圆角）。容器本身透明、无裁剪、无分隔线 —— 与原生卡片列表一致。
      */
-    private static LinearLayout card(Context c, int cardBg, float d) {
+    static LinearLayout card(Context c, int cardBg, float d) {
         LinearLayout v = new LinearLayout(c);
         v.setOrientation(LinearLayout.VERTICAL);
         return v;
@@ -1448,7 +1475,7 @@ public final class SyncPage {
      *  - 开关行：给行根挂宿主自己的 COUISwitchTouchEventDelegate（把开关区的触摸代理给 COUISwitch
      *    并驱动行按压动画，与原生同一类），并令 main_layout（内层 ListSelectedItemLayout）点击也切换。
      */
-    private static void finishCard(LinearLayout card, float d, int cardBg) {
+    static void finishCard(LinearLayout card, float d, int cardBg) {
         int n = card.getChildCount();
         for (int i = 0; i < n; i++) {
             final View child = card.getChildAt(i);
@@ -1587,7 +1614,7 @@ public final class SyncPage {
 
 
 
-    private static LinearLayout.LayoutParams lp(float d, int topDp) {
+    static LinearLayout.LayoutParams lp(float d, int topDp) {
         LinearLayout.LayoutParams l = new LinearLayout.LayoutParams(MATCH, WRAP);
         l.topMargin = dp(d, topDp);
         return l;
@@ -1820,7 +1847,7 @@ public final class SyncPage {
         } catch (Throwable t) { return 0; }
     }
 
-    private static int dp(float d, float v) { return (int) (v * d + 0.5f); }
+    static int dp(float d, float v) { return (int) (v * d + 0.5f); }
 
     private static int statusBarHeight(Context c) {
         try {
@@ -1892,7 +1919,7 @@ public final class SyncPage {
     }
 
 
-    private static void toast(Context c, String s) {
+    static void toast(Context c, String s) {
         android.widget.Toast.makeText(c, s, android.widget.Toast.LENGTH_SHORT).show();
     }
 

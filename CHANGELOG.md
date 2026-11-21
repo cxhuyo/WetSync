@@ -3,6 +3,37 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 `主.次.修订`。
 完整的逐条开发记录见 [`docs/DEVLOG.md`](docs/DEVLOG.md)。
 
+## [3.20.1] - 2026-11-21
+
+### 变更
+
+- **项目定名 WetSync**（曾用名 WtSync / ImeSync），模块包名同步改为 `com.cxhuyo.wetsync`。
+  宿主私有目录仍沿用 `files/wtsync/`，已入组的设备不需要重新配对。
+- **模块主页回到模块自身**：新增 `StatusActivity`（桌面图标 `WetSync`），按 COUI 风格自绘，
+  运行在模块进程里，不再往小布输入法里注入状态页。展示状态胶囊、作用域、模块/API/框架版本、
+  适配的小布输入法版本。
+- **状态检测对齐 LuckyTool**：通过 `XposedServiceHelper` 绑定管理器，按「拿到 service 且
+  `getApiVersion() >= 101`」判定框架在线，用 `getScope()` / `getRunningTargets()` 判断作用域与
+  注入进程；作用域状态做成粘性，管理器回收 binder 后不会把「已激活」打回「未检测到」。
+- **申请作用域只发请求**：`requestScope()` 直接向管理器申请，由它推送「作用域请求」通知，
+  不再查询/拉起任何管理器 Activity；首次打开且未授权时自动申请一次。
+- 管理器不可用时回退到广播探活（`PROBE` / `PROBE_BACK`），仍能确认模块是否注入宿主。
+- 页面不再有「刷新检测」按钮：`onResume` 起 5 秒轮询 + service 回调，状态自动更新。
+- 「申请作用域」不再弹对话框：只发请求 + 一条 toast，授权结果由管理器通知承载。
+- 移除「同步引擎」一栏：状态卡片只保留模块状态与作用域，引擎内部状态不再暴露。
+- 模块主页底部新增固定提示「如何使用：小布输入法 → 输入法设置 → 跨设备同步」。
+- 修复「授权成功却提示失败」：管理器在作用域已存在时也会回调 `onScopeRequestFailed`，
+  现在失败回调后 400ms 重新读一次 `getScope()`，以真实作用域为准；已授权时直接跳过请求。
+
+### 文档
+
+- 新增 [`docs/LSPOSED_STATUS.md`](docs/LSPOSED_STATUS.md)：libxposed service 原理、
+  LuckyTool 检测方式的反编译结论、本模块状态机与作用域申请时序、验证命令。
+
+### 移除
+
+- 移除宿主内的「模块状态」二级页（`ModuleStatusPage`）及其入口。
+
 ## [3.18.8] - 2026-11-16
 
 ### 修复

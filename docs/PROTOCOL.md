@@ -48,7 +48,7 @@ Content-Type: application/octet-stream
 - 拿到 `gen_uin_token` 后，用它调 `/gen_uin_v2` 完成绑定
 
 `SALT`、`BOOT`（BootstrapKey）等常量定义在
-[`WxClient.java`](../app/src/main/java/com/cxhuyo/wtsync/WxClient.java) 顶部。
+[`WxClient.java`](../app/src/main/java/com/cxhuyo/wetsync/WxClient.java) 顶部。
 
 ## 3. 签名
 

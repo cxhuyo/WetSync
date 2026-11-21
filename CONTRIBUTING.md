@@ -5,10 +5,10 @@
 先按 [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) 自查一遍，并准备好这些信息：
 
 ```
-机型 / 系统版本（如 ColorOS 16 / Android 16）
+机型 / 系统版本（如 ColorOS 17 / Android 17）
 小布输入法版本（设置 → 关于）
 LSPosed 版本 / libxposed API
-WtSync 版本（LSPosed 管理器里显示）
+WetSync 版本（LSPosed 管理器里显示）
 复现步骤（PC 端操作 + 手机端操作，尽量精确到"复制了什么、在第几秒"）
 module.log 相关片段
 ```

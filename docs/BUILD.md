@@ -77,7 +77,7 @@ adb shell su -c 'am force-stop com.oplus.keyboard'
 
 然后在 LSPosed 管理器里：
 
-1. 模块 → 启用 **WtSync**
+1. 模块 → 启用 **WetSync**
 2. 作用域 → 只勾选 `com.oplus.keyboard`
 3. 打开任意输入框，弹出小布输入法即生效
 

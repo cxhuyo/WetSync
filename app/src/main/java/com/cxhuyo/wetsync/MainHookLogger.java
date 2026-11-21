@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 import android.util.Log;
 
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  */
 final class MainHookLogger {
 
-    static final String TAG = "LspModTemplate";
+    static final String TAG = "WetSync";
 
     private static volatile MainHook module;
     private static volatile File logFile;
@@ -39,6 +39,11 @@ final class MainHookLogger {
 
     static void bind(MainHook m) {
         module = m;
+    }
+
+    /** 模块实例（libxposed 框架对象）：状态页从这里取 API / 框架版本 */
+    static MainHook module() {
+        return module;
     }
 
     /** 非阻塞：调用线程只做字符串拼接 + offer */

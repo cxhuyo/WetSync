@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

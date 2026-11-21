@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 /**
  * Snappy 原始块格式（raw block，非 framed）解码器。

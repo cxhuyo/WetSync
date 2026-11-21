@@ -1,4 +1,4 @@
-package com.cxhuyo.wtsync;
+package com.cxhuyo.wetsync;
 
 /**
  * 微信输入法「个人词库」的词条解析。

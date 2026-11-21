@@ -6,27 +6,27 @@ body:
   - type: markdown
     attributes:
       value: |
-        提交前请先过一遍 [排障手册](https://github.com/cxhuyo/WtSync/blob/main/docs/TROUBLESHOOTING.md)。
+        提交前请先过一遍 [排障手册](https://github.com/cxhuyo/WetSync/blob/main/docs/TROUBLESHOOTING.md)。
         **请自行脱敏**：uin、token、设备组 id、内网地址都不要贴。
   - type: input
     id: device
     attributes:
       label: 机型与系统
-      placeholder: 一加 13 / ColorOS 16 / Android 16
+      placeholder: 一加 13 / ColorOS 17 / Android 17
     validations:
       required: true
   - type: input
     id: host
     attributes:
       label: 小布输入法版本
-      placeholder: 1.8.35.17-mkt（设置 → 关于）
+      placeholder: 1.9.18.17-mkt（设置 → 关于）
     validations:
       required: true
   - type: input
     id: module
     attributes:
-      label: WtSync 版本 / LSPosed 版本
-      placeholder: 3.18.8 (51) / LSPosed 2.1.x
+      label: WetSync 版本 / LSPosed 版本
+      placeholder: 3.20.0 (53) / LSPosed 2.1.x
     validations:
       required: true
   - type: dropdown
