@@ -32,5 +32,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 「关于」：模块信息 + 赞赏支持 -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="关于"
+            android:theme="@style/AppTheme" />
     </application>
 </manifest>
